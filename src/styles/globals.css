@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --foreground-rgb: 255, 255, 255;
+        --background-start-rgb: 0, 0, 0;
+        --background-end-rgb: 0, 0, 0;
+    }
+}
+
+body {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 10px 24px 160px 24px;
+}
+
+@media screen and (max-width: 640px) {
+    .main {
+        padding: 0;
+    }
+}
+
+.button-anim {
+    --c: #3E79FF; /* the color */
+
+    color: #0000;
+    background:
+        linear-gradient(90deg, #fff 50%, var(--c) 0) calc(100% - var(--_p, 0%)) / 200%,
+        linear-gradient(var(--c) 0 0) 0% 100% / var(--_p, 0%) no-repeat,
+        var(--_c, #0000);
+    -webkit-background-clip: text, padding-box, padding-box;
+    background-clip: text, padding-box, padding-box;
+    transition: 0s, color .5s, background-color .5s;
+}
+
+.button-anim:hover {
+    --_c: var(--c);
+    --_p: 100%;
+    transition: 0.5s, color 0s .5s, background-color 0s .5s;
+}
+
+.wallet-adapter-button {
+    border: none !important;
+    color: black !important;
+    background-color: none !important;
+    height: 40px !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.wallet-adapter-button:hover {
+    color: #3E79FF !important;
+    background-color: transparent !important;
+}
+
+.wallet-adapter-modal-wrapper .wallet-adapter-button {
+    border: none !important;
+    color: #FFFFFF !important;
+    background-color: #10141F !important;
+    height: 48px !important;
+}
+
+.wallet-adapter-button-trigger .wallet-adapter-button-end-icon,
+.wallet-adapter-button-trigger .wallet-adapter-button-start-icon,
+.wallet-adapter-button-trigger .wallet-adapter-button-end-icon img,
+.wallet-adapter-button-trigger .wallet-adapter-button-start-icon img {
+    content: unset !important;
+    /* border-right: 1px solid black !important;  */
+}
+
+.remove-tap-highlight {
+    -webkit-tap-highlight-color: transparent !important;
+}
