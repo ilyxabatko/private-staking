@@ -47,6 +47,22 @@ body {
     transition: 0.5s, color 0s .5s, background-color 0s .5s;
 }
 
+.accent-button-styling {
+    @apply text-base px-10 rounded-[7px] font-semibold w-full flex mx-auto py-2 bg-[#3E79FF] text-white transition-all ease-in duration-150 disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none
+}
+
+.accent-button-styling:hover {
+    @apply bg-[#3263d4] 
+}
+
+.secondary-button-styling {
+    @apply text-base px-10 rounded-[7px] font-semibold w-full flex mx-auto py-2 border-none bg-transparent text-[#3E79FF] transition-all ease-in duration-150 disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none
+}
+
+.secondary-button-styling:hover {
+    @apply bg-[#3333331d]
+}
+
 .wallet-adapter-button {
     border: none !important;
     color: black !important;
@@ -77,4 +93,11 @@ body {
 
 .remove-tap-highlight {
     -webkit-tap-highlight-color: transparent !important;
+}
+
+@layer utilities {
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        @apply appearance-none;
+    }
 }

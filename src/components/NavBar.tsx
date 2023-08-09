@@ -15,7 +15,7 @@ const NavBar = () => {
     }, []);
 
     return (
-        <nav className="flex flex-between sticky top-3 w-full mb-16 pt-3 z-50">
+        <nav className="flex flex-between sticky top-3 w-full pt-3 z-50">
             <Link href="/" className="flex items-center gap-1 ml-10 xsm:ml-2 remove-tap-highlight">
                 <Image
                     src="/privacy.png"
