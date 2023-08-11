@@ -1,0 +1,3 @@
+
+
+const DERIVE_STRING: string = "MARINADE_LIQUID_STAKE_KEY";
