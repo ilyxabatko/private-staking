@@ -1,10 +1,10 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
+import TopUp from '@/components/TopUp';
 import { Toaster } from 'react-hot-toast';
-import Staking from '@/components/Staking';
 
 
-const Stake = () => {
+const Topup = () => {
 
     return (
         <>
@@ -18,9 +18,9 @@ const Stake = () => {
                 />
             </div>
 
-            <Staking />
+            <TopUp />
         </>
     )
 }
 
-export default Stake;
+export default Topup;

@@ -22,12 +22,6 @@ body {
     padding: 10px 24px 160px 24px;
 }
 
-@media screen and (max-width: 640px) {
-    .main {
-        padding: 0;
-    }
-}
-
 .button-anim {
     --c: #3E79FF; /* the color */
 
@@ -93,6 +87,16 @@ body {
 
 .remove-tap-highlight {
     -webkit-tap-highlight-color: transparent !important;
+}
+
+@media screen and (max-width: 640px) {
+    .main {
+        padding: 0;
+    }
+
+    .wallet-adapter-button {
+        padding: 2px;
+    }
 }
 
 @layer utilities {

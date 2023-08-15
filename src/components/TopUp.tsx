@@ -15,7 +15,6 @@ const TopUp = () => {
     const [walletBalance, setWalletBalance] = useState<number>(0);
     const [privateBalance, setPrivateBalance] = useState<BigInt>(BigInt(0));
     const [amount, setAmount] = useState<number | string>(0);
-    const [fee, setFee] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
     const [elusiv, setElusiv] = useState<Elusiv | null>(null);
 
@@ -78,10 +77,6 @@ const TopUp = () => {
         // Sign it (only needed for topups, as we're topping up from our public key there)
         const signedTx = signTransaction && await signTransaction(topupTx.tx);
 
-        // display fees 
-        const fee = await topupTx.getTotalFeeAmount();
-        setFee(fee);
-
         signedTx && topupTx.setSignedTx(signedTx);
         // Send it off
         const tx = await elusivInstance.sendElusivTx(topupTx);
@@ -91,6 +86,7 @@ const TopUp = () => {
         await getPrivateBalance();
 
         setLoading(false);
+        console.log("Topup transaction hash: ", tx);
         return tx;
     };
 
@@ -103,10 +99,6 @@ const TopUp = () => {
         // Build the send transaction
         const sendTx = await elusivInstance.buildSendTx(amount * LAMPORTS_PER_SOL, recipient, tokenType);
 
-        // display fees 
-        const fee = await sendTx.getTotalFeeAmount();
-        setFee(fee);
-
         // Send it off
         const tx = await elusivInstance.sendElusivTx(sendTx);
 
@@ -115,6 +107,7 @@ const TopUp = () => {
         await getPrivateBalance();
 
         setLoading(false);
+        console.log("Transfer transaction hash: ", tx);
         return tx;
     };
 
@@ -204,10 +197,6 @@ const TopUp = () => {
                             <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                 <p className=''>Private Balance: </p>
                                 <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
-                            </div>
-                            <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
-                                <p className=''>Transaction Fee: </p>
-                                <p className='text-[#3E79FF]'>{fee / LAMPORTS_PER_SOL} SOL</p>
                             </div>
                         </div>
 
