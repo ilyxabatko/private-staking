@@ -1,8 +1,28 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# StakenZ - Private Liquidity Staking on Solana
 
-## Getting Started
+StakenZ is a groundbreaking application that enables users to liquidity stake privately on the Solana blockchain. By harnessing the power of Elusiv and Marinade Protocol, StakenZ brings together cutting-edge privacy technology and efficient staking solutions.
 
-First, run the development server:
+## About StakenZ
+
+StakenZ leverages the innovative Elusiv protocol, a blockchain-based, zero-knowledge privacy solution that empowers users and applications with universal encryption capabilities. Elusiv employs zk-SNARKs technology to facilitate private transactions and decentralized compliance solutions, striking a harmonious balance between privacy and compliance.
+
+Additionally, StakenZ integrates with the Marinade Protocol, a Solana-based staking protocol. This integration enables users to liquidity stake SOL tokens and seamlessly initiate instant unstaking operations.
+
+## Features
+
+- **Private Balance Management:** StakenZ enables users to top up their private balance and withdraw funds using the Elusiv protocol.
+- **Effortless Liquidity Staking:** With Marinade Protocol, users can liquidity stake SOL tokens and easily initiate unstaking operations.
+- **Upcoming GUI Enhancements:** While the current front-end may not be fully polished, rest assured that StakenZ has plans to provide a more intuitive and informative graphical user interface (GUI) in the near future.
+- **Future-Focused:** StakenZ is currently available on the Devnet network, but excitingly, it will soon launch on the Solana mainnet, expanding its reach and capabilities.
+
+## Local start
+
+Clone the repository
+
+```git clone https://github.com/ilyxabatko/private-staking.git
+```
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,21 +34,15 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Resources
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- [Elusiv](https://elusiv.io/): Learn more about the privacy protocol that powers secure transactions and compliance solutions.
+- [Marinade Protocol](https://marinade.finance/): Explore the staking protocol that enables efficient liquidity staking on the Solana blockchain.
 
-## Learn More
+## Note
 
-To learn more about Next.js, take a look at the following resources:
+StakenZ acknowledges that errors might occur during staking and unstaking transactions at this stage. 
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Author
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+[Elijah](https://twitter.com/elijahbrnv) - passionate Solana and Rust developer.
