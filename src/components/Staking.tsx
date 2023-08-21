@@ -246,7 +246,7 @@ const Staking = () => {
                                     </div>
                                     <div className='flex flex-col w-full items-start justify-between mt-1'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
-                                            <p className=''>Private Balance: </p>
+                                            <p className=''>Private SOL Balance: </p>
                                             <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
                                         </div>
                                     </div>

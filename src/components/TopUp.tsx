@@ -46,17 +46,34 @@ const TopUp = () => {
     };
 
     const handleMaxButtonClick = () => {
-        if (walletBalance == 0 || !walletBalance) {
-            setAmount(Number(0));
+        if (inputTokenType === "LAMPORTS") {
+            if (Number(walletBalance) == 0 || !walletBalance) {
+                setAmount(Number(0));
+            } else {
+                setAmount((Number(walletBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
+            }
         } else {
-            setAmount((walletBalance / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
+            if (Number(mSolBalance) == 0 || !mSolBalance) {
+                setAmount(Number(0));
+            } else {
+                setAmount(Number(mSolBalance).toFixed(5));
+            }
         }
     };
+
     const handleWithdrawMaxButtonClick = () => {
-        if (Number(privateBalance) == 0 || !privateBalance) {
-            setWithdrawAmount(Number(0));
+        if (inputTokenType === "LAMPORTS") {
+            if (Number(privateBalance) == 0 || !privateBalance) {
+                setWithdrawAmount(Number(0));
+            } else {
+                setWithdrawAmount((Number(privateBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
+            }
         } else {
-            setWithdrawAmount((Number(privateBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
+            if (Number(privateMSOLBalance) == 0 || !privateMSOLBalance) {
+                setWithdrawAmount(Number(0));
+            } else {
+                setWithdrawAmount(Number(privateMSOLBalance).toFixed(5));
+            }
         }
     };
 
@@ -71,12 +88,12 @@ const TopUp = () => {
 
                 toast((t) => (
                     <span className='px-2 py-1 overflow-auto text-base'>
-                      Topup details: 
-                      <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
-                        click
-                      </Link>
+                        Topup details:
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
+                            click
+                        </Link>
                     </span>
-                  ), { duration: 5000 });
+                ), { duration: 5000 });
                 await getBalance();
             } catch (error) {
                 toast.error(`Topup error, check the console for details.`, {
@@ -103,12 +120,12 @@ const TopUp = () => {
 
                 toast((t) => (
                     <span className='px-2 py-1 overflow-auto text-base'>
-                      Transfer details: 
-                      <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
-                        click
-                      </Link>
+                        Transfer details:
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
+                            click
+                        </Link>
                     </span>
-                  ), { duration: 5000 });
+                ), { duration: 5000 });
                 await getBalance();
             } catch (error) {
                 toast.error(`Transfer from private balance error, check the console for details`, {
@@ -275,12 +292,12 @@ const TopUp = () => {
                                     </div>
                                     <div className='flex flex-col w-full items-start justify-between my-1'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
-                                            <p className=''>Wallet Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(walletBalance / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className=''>Private SOL Balance: </p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
                                         </div>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
-                                            <p className=''>Private Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className=''>Private mSOL Balance: </p>
+                                            <p className='text-[#3E79FF]'>{Number(privateMSOLBalance)} mSOL</p>
                                         </div>
                                     </div>
                                     <div className='w-full flex flex-col mx-auto mt-12 gap-1'>

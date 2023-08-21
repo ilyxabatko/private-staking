@@ -69,7 +69,7 @@ export const ElusivProvider: FC<Props> = ({ children }) => {
         }
 
         getParams();
-    }, [publicKey, connection]);
+    }, [publicKey]);
 
     useEffect(() => {
         updatePrivateSOLBalance();
