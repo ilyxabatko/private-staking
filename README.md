@@ -19,8 +19,7 @@ Additionally, StakenZ integrates with the Marinade Protocol, a Solana-based stak
 
 Clone the repository
 
-```git clone https://github.com/ilyxabatko/private-staking.git
-```
+`git clone https://github.com/ilyxabatko/private-staking.git`
 
 Run the development server:
 
