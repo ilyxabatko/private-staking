@@ -2,61 +2,103 @@
 
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, Keypair, PublicKey } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL, Transaction, SystemProgram } from '@solana/web3.js';
 import { toast } from 'react-hot-toast';
-import { getElusiv } from '@/utils/GetElusiv';
-import { Elusiv, TokenType } from '@elusiv/sdk';
+import { useElusiv } from '@/context/ElusivAndBalance';
+import { useMarinade } from '@/context/MarinadeContext';
+import { MarinadeUtils } from '@marinade.finance/marinade-ts-sdk';
 
 const Staking = () => {
-    const DERIVE_STRING: string = "MARINADE_LIQUID_STAKE_KEY";
-    const { publicKey, signTransaction, signMessage } = useWallet();
-    const { connection } = useConnection();
+    const { signMessage, sendTransaction } = useWallet();
 
-    const [walletBalance, setWalletBalance] = useState<number>(0);
-    const [privateBalance, setPrivateBalance] = useState<BigInt>(BigInt(0));
     const [amount, setAmount] = useState<number | string>(0);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [elusiv, setElusiv] = useState<Elusiv | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, burnerKeypair, sendFromPrivateBalance, topUpPrivateBalance, returnSolFromBurner } = useElusiv();
+    const { marinade } = useMarinade();
 
-    useEffect(() => {
-        if (!publicKey || !connection) return;
-
-        const setParams = async () => {
-            const { elusiv } = await getElusiv(publicKey, signMessage);
-            setElusiv(elusiv);
-            toast("Instantiated Elusiv");
-
-            setLoading(false);
-        };
-
-        getBalance();
-        setParams();
-    }, [publicKey]);
-
-    useEffect(() => {
-        if (elusiv !== null) {
-            getPrivateBalance();
+    const depositStake = async () => {
+        if (!marinade || !elusiv || !burnerKeypair || !publicKey) {
+            return;
         }
-    }, [elusiv]);
 
-    const getBalance = async () => {
+        // deposit a bit of SOL to a burner to initialize it:
+        const rent = await connection.getMinimumBalanceForRentExemption(0, "confirmed");
+
+        const transferSolTx = new Transaction().add(
+            SystemProgram.transfer({
+                fromPubkey: publicKey,
+                toPubkey: burnerKeypair.publicKey,
+                // 125000 (0.000125 SOL) to send mSOL later, remaining SOL will be returned from the burner in the end
+                lamports: (rent + 50_000_000)
+            })
+        );
+
+        await sendTransaction(transferSolTx, connection);
+
+        // build and send a Transfer tx (from private balance to a burner address)
+        if (Number(privateBalance) > 0) {
+            const sendFee = (await elusiv.estimateSendFee({ amount: Number(amount), tokenType: "LAMPORTS", recipient: burnerKeypair.publicKey })).txFee / LAMPORTS_PER_SOL;
+            await sendFromPrivateBalance(burnerKeypair.publicKey, (Number(amount) + sendFee), "LAMPORTS");
+        }
+
+        // build a deposit tx (from a burner to a stake address)
+        const { transaction, associatedMSolTokenAccountAddress } = await marinade.deposit(MarinadeUtils.solToLamports(Number(amount)), {mintToOwnerAddress: publicKey});
+
+        // send and confirm a deposit tx
+        const depositSignature = await connection.sendTransaction(transaction, [burnerKeypair]);
+        await connection.confirmTransaction(depositSignature, "finalized");
+        console.log("Deposit signature: " + depositSignature);
+
+        // topup private balance with mSOL from a burner
+        console.log("Sending mSOL to the private balance...");
+
+        const mSolBalance = (await connection.getTokenAccountBalance(associatedMSolTokenAccountAddress)).value.uiAmountString; // the balance as a string, using mint-prescribed decimals
+        console.log("Burner mSOL balance: " + Number(mSolBalance));
+        const mSolBalanceParsed = mSolBalance && parseFloat(mSolBalance);
+        // const mSOLtoSend = MarinadeUtils.solToLamports(Number(mSolBalanceParsed));
+        console.log("mSOL to send after cutting a part for fees: " + mSolBalanceParsed);
+
         try {
-            const balance = publicKey && await connection.getBalance(publicKey);
-            balance && setWalletBalance(balance);
+            const topUpSignature = mSolBalance && await topUpPrivateBalance(mSolBalanceParsed as number, "mSOL", burnerKeypair.publicKey).then(() => updatePrivateMSOLBalance());
+
+            console.log(mSolBalance + " mSOL tokens were sent to the private balance");
+            return topUpSignature;
         } catch (error) {
-            console.error(error);
+            console.log("An error topping up mSOL private balance: " + error);
         }
+
+        // return the remaining SOL from the burner to the private balance
+        returnSolFromBurner();
     }
 
-    const getPrivateBalance = async () => {
-        try {
-            const privateBalance = elusiv && await elusiv.getLatestPrivateBalance("LAMPORTS");
-            privateBalance && setPrivateBalance(privateBalance);
-        } catch (error) {
-            console.error(error);
+    const handleStakeButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        event.preventDefault();
+        toast("Depositing tokens...");
+        setLoading(true);
+
+        if (Number(amount) > 0 && Number(privateBalance) > 0) {
+            try {
+                const signature = await depositStake();
+                toast.success(`Deposit completed with sig ${signature}`, {
+                    duration: 5000, style: {
+                        overflow: "auto",
+                        padding: "16px"
+                    }
+                });
+            } catch (error) {
+                toast.error(`An error occured, check the console for details.`, {
+                    duration: 5000, style: {
+                        overflow: "auto",
+                        padding: "16px"
+                    }
+                });
+                console.log(error);
+            } finally {
+                setLoading(false);
+            }
         }
-    }
+    };
 
     const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
@@ -64,6 +106,9 @@ const Staking = () => {
     };
 
     const handleMaxButtonClick = () => {
+        if (Number(privateBalance) == 0 || !privateBalance) {
+            setAmount(Number(0));
+        }
         setAmount((Number(privateBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
     };
 
@@ -71,7 +116,7 @@ const Staking = () => {
         <section className="h-[70vh] flex items-center justify-center mx-auto overflow-hidden relative">
 
             <div className='flex flex-col space-y-4'>
-                <div className='h-[360px] xsm:h-[370px] min-w-[330px] max-w-lg border border-[#3E79FF] border-opacity-60 rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                <div className='h-[350px] min-w-[330px] max-w-lg border border-[#3E79FF] border-opacity-60 rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
                     <div className='flex flex-col items-start'>
                         <div className='text-2xl font-montserrat font-semibold text-[#333] flex items-center mb-6'>
                             Liquid Staking
@@ -89,18 +134,24 @@ const Staking = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className='flex flex-col w-full items-start justify-between my-1'>
+                        <div className='flex flex-col w-full items-start justify-between mt-1'>
                             <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                 <p className=''>Private Balance: </p>
                                 <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
                             </div>
                         </div>
+                        <div className='flex flex-col w-full items-start justify-between'>
+                            <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
+                                <p className=''>Private mSOL Balance: </p>
+                                <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL)} mSOL</p>
+                            </div>
+                        </div>
 
                         <div className='w-full flex flex-col mx-auto mt-12 gap-1'>
-                            <button className='flex items-center justify-center text-center accent-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => {  }}>
+                            <button className='flex items-center justify-center text-center accent-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => { handleStakeButtonClick(e) }}>
                                 <p>Stake</p>
                             </button>
-                            <button className='flex items-center justify-center text-center secondary-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => {  }} >
+                            <button className='flex items-center justify-center text-center secondary-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => { }} >
                                 <p>Unstake</p>
                             </button>
                         </div>

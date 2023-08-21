@@ -2,6 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import TopUp from '@/components/TopUp';
 import { Toaster } from 'react-hot-toast';
+import { ElusivProvider } from '@/context/ElusivAndBalance';
 
 
 const Topup = () => {

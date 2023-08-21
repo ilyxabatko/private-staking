@@ -4,6 +4,8 @@ import { Inter } from 'next/font/google'
 import { Wallet } from '@/context/Wallet';
 import NavBar from '@/components/NavBar';
 import localFont from 'next/font/local';
+import { ElusivProvider } from '@/context/ElusivAndBalance';
+import { MarinadeProvider } from '@/context/MarinadeContext';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -61,10 +63,14 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${montserrat.variable} font-sans`}>
             <Wallet>
-                <body className={`${inter.className} bg-gradient-to-r from-[#e3e2de] to-[#99acf3]`}>
-                    <NavBar />
-                    {children}
-                </body>
+                <ElusivProvider>
+                    <MarinadeProvider>
+                        <body className={`${inter.className} bg-gradient-to-r from-[#e3e2de] to-[#99acf3]`}>
+                            <NavBar />
+                            {children}
+                        </body>
+                    </MarinadeProvider>
+                </ElusivProvider>
             </Wallet>
         </html>
     )

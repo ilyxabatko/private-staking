@@ -1,30 +1,39 @@
 {
-  "name": "private-staking",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@elusiv/sdk": "^0.1.18",
-    "@solana/wallet-adapter-base": "^0.9.23",
-    "@solana/wallet-adapter-react": "^0.15.34",
-    "@solana/wallet-adapter-react-ui": "^0.9.33",
-    "@solana/wallet-adapter-wallets": "^0.19.20",
-    "@solana/web3.js": "^1.78.3",
-    "@types/node": "20.4.8",
-    "@types/react": "18.2.18",
-    "@types/react-dom": "18.2.7",
-    "autoprefixer": "10.4.14",
-    "next": "13.4.12",
-    "postcss": "8.4.27",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-hot-toast": "^2.4.1",
-    "tailwindcss": "3.3.3",
-    "typescript": "5.1.6"
-  }
+    "name": "private-staking",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@elusiv/sdk": "^0.1.18",
+        "@headlessui/react": "^1.7.17",
+        "@marinade.finance/marinade-ts-sdk": "^5.0.3",
+        "@solana/spl-token": "^0.3.8",
+        "@solana/wallet-adapter-base": "^0.9.23",
+        "@solana/wallet-adapter-react": "^0.15.34",
+        "@solana/wallet-adapter-react-ui": "^0.9.33",
+        "@solana/wallet-adapter-wallets": "^0.19.20",
+        "@solana/web3.js": "^1.78.3",
+        "@types/node": "20.4.8",
+        "@types/react": "18.2.18",
+        "@types/react-dom": "18.2.7",
+        "autoprefixer": "10.4.14",
+        "fs": "^0.0.1-security",
+        "next": "^13.4.16",
+        "postcss": "8.4.27",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "react-hot-toast": "^2.4.1",
+        "tailwindcss": "3.3.3",
+        "typescript": "5.1.6"
+    },
+    "browser": {
+        "fs": false,
+        "os": false,
+        "path": false
+    }
 }

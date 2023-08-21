@@ -3,20 +3,15 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect } from 'react';
 import useIsMounted from '@/utils/Mount';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 const NavBar = () => {
     const isMounted = useIsMounted();
 
-    useEffect(() => {
-
-    }, []);
-
     return (
         <nav className="flex justify-between sm:justify-center sticky top-3 w-full pt-3 z-50">
-            <Link href="/" className="flex items-center gap-1 ml-10 sm:ml-0 remove-tap-highlight">
+            <Link href="/" className="flex items-center gap-1 ml-10 xsm:ml-0 remove-tap-highlight">
                 <Image
                     src="/privacy.png"
                     alt="Privacy Logo"
