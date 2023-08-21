@@ -47,14 +47,16 @@ const TopUp = () => {
     const handleMaxButtonClick = () => {
         if (walletBalance == 0 || !walletBalance) {
             setAmount(Number(0));
+        } else {
+            setAmount((walletBalance / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
         }
-        setAmount((walletBalance / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
     };
     const handleWithdrawMaxButtonClick = () => {
         if (Number(privateBalance) == 0 || !privateBalance) {
             setWithdrawAmount(Number(0));
+        } else {
+            setWithdrawAmount((Number(privateBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
         }
-        setWithdrawAmount((Number(privateBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
     };
 
     const handleTopUpButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -141,6 +143,7 @@ const TopUp = () => {
                         </Tab>
                     </Tab.List>
 
+                    {/* TOP UP PANEL */}
                     <Tab.Panels>
                         <Tab.Panel>
                             <div className='h-[330px] xsm:h-[350px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
@@ -208,7 +211,7 @@ const TopUp = () => {
                                         </div>
                                     </div>
 
-                                    <div className='w-full flex flex-col mx-auto mt-12 gap-1'>
+                                    <div className='w-full flex flex-col mx-auto mt-10 gap-1'>
                                         <button className='flex items-center justify-center text-center accent-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => { handleTopUpButtonClick(e) }}>
                                             <p>Top Up</p>
                                         </button>
@@ -216,8 +219,10 @@ const TopUp = () => {
                                 </div>
                             </div>
                         </Tab.Panel>
+
+                        {/* WITHDRAW PANEL */}
                         <Tab.Panel>
-                            <div className='h-[330px] xsm:h-[350px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[310px] xsm:h-[350px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Withdraw from the private balance
