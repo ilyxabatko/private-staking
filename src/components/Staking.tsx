@@ -9,6 +9,7 @@ import { useElusiv } from '@/context/ElusivAndBalance';
 import { useMarinade } from '@/context/MarinadeContext';
 import { MarinadeUtils } from '@marinade.finance/marinade-ts-sdk';
 import { Tab } from '@headlessui/react'
+import Link from 'next/link';
 
 const Staking = () => {
     const { signMessage, sendTransaction } = useWallet();
@@ -119,15 +120,17 @@ const Staking = () => {
 
         if (Number(amount) > 0 && Number(privateBalance) > 0) {
             try {
-                const signature = await depositStake();
-                toast.success(`Deposit completed with sig ${signature}`, {
-                    duration: 5000, style: {
-                        overflow: "auto",
-                        padding: "16px"
-                    }
-                });
+                const sig = await depositStake();
+                toast((t) => (
+                    <span className='px-2 py-1 overflow-auto text-base'>
+                        Transfer details:
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig}?cluster=devnet`}>
+                            click
+                        </Link>
+                    </span>
+                ), { duration: 5000 });
             } catch (error) {
-                toast.error(`An error occured, check the console for details.`, {
+                toast.error(`Stake deposit error, check the console for details.`, {
                     duration: 5000, style: {
                         overflow: "auto",
                         padding: "16px"
@@ -147,15 +150,18 @@ const Staking = () => {
 
         if (Number(unstakeAmount) > 0 && Number(privateMSOLBalance) > 0) {
             try {
-                const signature = await unstakeLiquid();
-                toast.success(`Unstake completed with sig ${signature}`, {
-                    duration: 5000, style: {
-                        overflow: "auto",
-                        padding: "16px"
-                    }
-                });
+                const sig = await unstakeLiquid();
+
+                toast((t) => (
+                    <span className='px-2 py-1 overflow-auto text-base'>
+                        Transfer details:
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig}?cluster=devnet`}>
+                            click
+                        </Link>
+                    </span>
+                ), { duration: 5000 });
             } catch (error) {
-                toast.error(`An error occured, check the console for details.`, {
+                toast.error(`Unstake error, check the console for details.`, {
                     duration: 5000, style: {
                         overflow: "auto",
                         padding: "16px"
@@ -197,7 +203,7 @@ const Staking = () => {
     return (
         <section className="h-[70vh] flex items-center justify-center mx-auto overflow-hidden relative">
 
-            <div className='flex flex-col space-y-4'>
+            <div className='flex flex-col min-w-[320px] w-[400px] space-y-4'>
                 <Tab.Group>
 
                     <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
@@ -223,10 +229,10 @@ const Staking = () => {
 
                         {/* STAKE PANEL */}
                         <Tab.Panel>
-                            <div className='h-[310px] xsm:h-[330px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[310px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
-                                    <div className='text-2xl font-montserrat font-semibold text-[#333] flex items-center mb-6'>
-                                        Start liquid staking privately.
+                                    <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
+                                        Start liquid staking privately
                                     </div>
                                     <div className={`flex border border-[#333] border-opacity-30 bg-white w-full rounded-[5px] p-2 my-2 mx-auto items-center justify-between hover:border-[#3E79FF] focus:border-[#3E79FF] transition-all ease-in duration-150 ${loading && "cursor-not-allowed opacity-50"}`}>
                                         <div className='items-center h-8'>
@@ -262,9 +268,9 @@ const Staking = () => {
 
                         {/* UNSTAKE PANEL */}
                         <Tab.Panel>
-                            <div className='h-[310px] xsm:h-[330px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[310px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
-                                    <div className='text-2xl font-montserrat font-semibold text-[#333] flex items-center mb-6'>
+                                    <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Unstake your SOL
                                     </div>
                                     <div className={`flex border border-[#333] border-opacity-30 bg-white w-full rounded-[5px] p-2 my-2 mx-auto items-center justify-between hover:border-[#3E79FF] focus:border-[#3E79FF] transition-all ease-in duration-150 ${loading && "cursor-not-allowed opacity-50"}`}>

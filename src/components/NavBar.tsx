@@ -23,13 +23,13 @@ const NavBar = () => {
             </Link>
 
             <div className='flex w-full justify-end gap-6 sm:gap-6 xsm:gap-3'>
-                <Link href="/stake" className='flex items-center rounded-[10px] px-3 sm:px-0 hover:bg-[#3333331d]'>
+                <Link href="/stake" className='flex items-center rounded-[10px] px-3 sm:px-0 hover:bg-[#3333331d] hover:cursor-pointer'>
                     <div className='font-montserrat font-medium'>
                         Stake
                     </div>
                 </Link>
 
-                <Link href="/topup" className='flex items-center rounded-[10px] px-3 sm:px-0 hover:bg-[#3333331d]'>
+                <Link href="/topup" className='flex items-center rounded-[10px] px-3 sm:px-0 hover:bg-[#3333331d] hover:cursor-pointer'>
                     <div className='font-montserrat font-medium'>
                         Topup
                     </div>

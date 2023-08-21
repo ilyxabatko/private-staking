@@ -8,6 +8,7 @@ import { TokenType } from '@elusiv/sdk';
 import { useElusiv } from '@/context/ElusivAndBalance';
 import { Tab, Menu } from '@headlessui/react'
 import { useMarinade } from '@/context/MarinadeContext';
+import Link from 'next/link';
 
 const TopUp = () => {
     const [walletBalance, setWalletBalance] = useState<number>(0);
@@ -67,15 +68,18 @@ const TopUp = () => {
         if (walletBalance > 0 && publicKey) {
             try {
                 const sig = elusiv && await topUpPrivateBalance(amount as number, inputTokenType);
-                sig && toast.success(`Topup signature: ${sig.signature}`, {
-                    duration: 5000, style: {
-                        overflow: "auto",
-                        padding: "16px"
-                    }
-                });
+
+                toast((t) => (
+                    <span className='px-2 py-1 overflow-auto text-base'>
+                      Topup details: 
+                      <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
+                        click
+                      </Link>
+                    </span>
+                  ), { duration: 5000 });
                 await getBalance();
             } catch (error) {
-                toast.error(`An error occured, check the console for details.`, {
+                toast.error(`Topup error, check the console for details.`, {
                     duration: 5000, style: {
                         overflow: "auto",
                         padding: "16px"
@@ -96,15 +100,18 @@ const TopUp = () => {
         if (Number(privateBalance) > 0) {
             try {
                 const sig = elusiv && publicKey && await sendFromPrivateBalance(publicKey, withdrawAmount as number, inputTokenType);
-                sig && toast.success(`Transfer signature: ${sig.signature}`, {
-                    duration: 5000, style: {
-                        overflow: "auto",
-                        padding: "16px"
-                    }
-                });
+
+                toast((t) => (
+                    <span className='px-2 py-1 overflow-auto text-base'>
+                      Transfer details: 
+                      <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
+                        click
+                      </Link>
+                    </span>
+                  ), { duration: 5000 });
                 await getBalance();
             } catch (error) {
-                toast.error(`An error occured, check the console for details`, {
+                toast.error(`Transfer from private balance error, check the console for details`, {
                     duration: 5000, style: {
                         overflow: "auto",
                         padding: "16px"
@@ -120,7 +127,7 @@ const TopUp = () => {
     return (
         <section className="h-[70vh] flex items-center justify-center mx-auto overflow-hidden relative">
 
-            <div className='flex flex-col space-y-4'>
+            <div className='flex min-w-[320px] w-[400px] flex-col space-y-4'>
 
                 <Tab.Group>
 
@@ -146,14 +153,14 @@ const TopUp = () => {
                     {/* TOP UP PANEL */}
                     <Tab.Panels>
                         <Tab.Panel>
-                            <div className='h-[330px] xsm:h-[350px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[330px] rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Send to the private balance
                                     </div>
                                     <div className={`flex border border-[#333] border-opacity-30 bg-white w-full rounded-[5px] p-2 my-2 mx-auto items-center justify-between hover:border-[#3E79FF] focus:border-[#3E79FF] transition-all ease-in duration-150 ${loading && "cursor-not-allowed opacity-50"}`}>
-                                        <div className='items-center h-8'>
-                                            <input type="number" step="0.0001" min="0" placeholder='0' value={amount} autoComplete='off' name="amount" id="amount" className='h-full w-full p-1 px-2 text-lg border-none focus:outline-none' onChange={handleAmountChange} disabled={loading} />
+                                        <div className='flex w-full items-center h-8'>
+                                            <input type="number" step="0.0001" min="0" placeholder='0' value={amount} autoComplete='off' name="amount" id="amount" className='flex h-full w-full p-1 px-2 text-lg border-none focus:outline-none' onChange={handleAmountChange} disabled={loading} />
                                         </div>
                                         <div className={`flex flex-col justify-center items-center h-full ${loading && "cursor-not-allowed opacity-50"}`}>
                                             <button onClick={handleMaxButtonClick} className='bg-[#333] bg-opacity-20 rounded-[5px] text-xs py-1 px-2 cursor-pointer hover:bg-opacity-40 transition-all ease-in duration-150' disabled={loading}>
@@ -222,7 +229,7 @@ const TopUp = () => {
 
                         {/* WITHDRAW PANEL */}
                         <Tab.Panel>
-                            <div className='h-[310px] xsm:h-[350px] min-w-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[310px] w-full rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Withdraw from the private balance
@@ -235,6 +242,35 @@ const TopUp = () => {
                                             <button onClick={handleWithdrawMaxButtonClick} className='bg-[#333] bg-opacity-20 rounded-[5px] text-xs py-1 px-2 cursor-pointer hover:bg-opacity-40 transition-all ease-in duration-150' disabled={loading}>
                                                 MAX
                                             </button>
+                                        </div>
+                                        <div className={`flex flex-col ml-3 justify-center items-center h-full ${loading && "cursor-not-allowed opacity-50"}`}>
+                                            <Menu as="div" className="relative inline-block text-left">
+                                                <Menu.Button className="inline-flex w-full justify-center rounded-[5px] px-2 py-1 text-lg font-medium text-[#3E79FF] hover:bg-opacity-30 focus:outline-none">{inputTokenType === "LAMPORTS" ? "SOL" : inputTokenType}</Menu.Button>
+                                                <Menu.Items className="absolute right-0 mt-2 w-28 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                    <div className='p-2'>
+                                                        <Menu.Item>
+                                                            {({ active }) => (
+                                                                <div
+                                                                    className={`${active && 'bg-[#779ef8]'} rounded-md px-2 py-2 text-sm`}
+                                                                    onClick={() => setInputTokenType("LAMPORTS")}
+                                                                >
+                                                                    SOL
+                                                                </div>
+                                                            )}
+                                                        </Menu.Item>
+                                                        <Menu.Item>
+                                                            {({ active }) => (
+                                                                <div
+                                                                    className={`${active && 'bg-[#779ef8]'} flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                                                    onClick={() => setInputTokenType("mSOL")}
+                                                                >
+                                                                    mSOL
+                                                                </div>
+                                                            )}
+                                                        </Menu.Item>
+                                                    </div>
+                                                </Menu.Items>
+                                            </Menu>
                                         </div>
                                     </div>
                                     <div className='flex flex-col w-full items-start justify-between my-1'>
