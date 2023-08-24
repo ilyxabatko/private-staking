@@ -1,8 +1,8 @@
 "use client"
 
-import React, { HTMLProps } from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
-import { LAMPORTS_PER_SOL, Keypair, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { toast } from 'react-hot-toast';
 import { TokenType } from '@elusiv/sdk';
 import { useElusiv } from '@/context/ElusivAndBalance';
@@ -11,29 +11,19 @@ import { useMarinade } from '@/context/MarinadeContext';
 import Link from 'next/link';
 
 const TopUp = () => {
-    const [walletBalance, setWalletBalance] = useState<number>(0);
     const [amount, setAmount] = useState<number | string>(0);
     const [withdrawAmount, setWithdrawAmount] = useState<number | string>(0);
     const [inputTokenType, setInputTokenType] = useState<TokenType>("LAMPORTS");
     const [loading, setLoading] = useState<boolean>(false);
-    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, publicKey, connection, sendFromPrivateBalance, topUpPrivateBalance } = useElusiv();
-    const { mSolBalance, updateMSOLBalance } = useMarinade();
+    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, sendFromPrivateBalance, topUpPrivateBalance, updateSOLBalance, solBalance, mSolBalance, updateMSOLBalance } = useElusiv();
+    const { marinade } = useMarinade();
 
     useEffect(() => {
         if (!publicKey || !connection) return;
-        getBalance();
+        updateSOLBalance();
         updatePrivateSOLBalance();
         updateMSOLBalance();
     }, [publicKey]);
-
-    const getBalance = async () => {
-        try {
-            const balance = publicKey && await connection.getBalance(publicKey, "confirmed");
-            balance && setWalletBalance(balance);
-        } catch (error) {
-            console.error("An error fetching wallet balance: " + error);
-        }
-    }
 
     const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
@@ -47,10 +37,10 @@ const TopUp = () => {
 
     const handleMaxButtonClick = () => {
         if (inputTokenType === "LAMPORTS") {
-            if (Number(walletBalance) == 0 || !walletBalance) {
+            if (Number(solBalance) == 0 || !solBalance) {
                 setAmount(Number(0));
             } else {
-                setAmount((Number(walletBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
+                setAmount((Number(solBalance) / LAMPORTS_PER_SOL).toFixed(5));
             }
         } else {
             if (Number(mSolBalance) == 0 || !mSolBalance) {
@@ -66,35 +56,34 @@ const TopUp = () => {
             if (Number(privateBalance) == 0 || !privateBalance) {
                 setWithdrawAmount(Number(0));
             } else {
-                setWithdrawAmount((Number(privateBalance) / LAMPORTS_PER_SOL - 0.00001).toFixed(5));
+                setWithdrawAmount((Number(privateBalance) / LAMPORTS_PER_SOL).toFixed(5));
             }
         } else {
             if (Number(privateMSOLBalance) == 0 || !privateMSOLBalance) {
                 setWithdrawAmount(Number(0));
             } else {
-                setWithdrawAmount(Number(privateMSOLBalance).toFixed(5));
+                setWithdrawAmount((Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5));
             }
         }
     };
 
     const handleTopUpButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Topping Up...");
+        toast("Topping Up...", { duration: 3000});
         setLoading(true);
 
-        if (walletBalance > 0 && publicKey) {
+        if (solBalance > 0 && publicKey) {
             try {
                 const sig = elusiv && await topUpPrivateBalance(amount as number, inputTokenType);
 
                 toast((t) => (
                     <span className='px-2 py-1 overflow-auto text-base'>
                         Topup details:
-                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}`} target="_blank" rel="noopener noreferrer">
                             click
                         </Link>
                     </span>
                 ), { duration: 5000 });
-                await getBalance();
             } catch (error) {
                 toast.error(`Topup error, check the console for details.`, {
                     duration: 5000, style: {
@@ -104,14 +93,14 @@ const TopUp = () => {
                 });
                 console.error(error);
             } finally {
-                setLoading(false);
+                await onInteractionEnd();
             }
         }
     }
 
     const handleSendButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Sending private balance tokens...");
+        toast("Sending private balance tokens... ", { duration: 3000});
         setLoading(true);
 
         if (Number(privateBalance) > 0) {
@@ -121,12 +110,11 @@ const TopUp = () => {
                 toast((t) => (
                     <span className='px-2 py-1 overflow-auto text-base'>
                         Transfer details:
-                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}?cluster=devnet`}>
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig?.signature}`} target="_blank" rel="noopener noreferrer">
                             click
                         </Link>
                     </span>
                 ), { duration: 5000 });
-                await getBalance();
             } catch (error) {
                 toast.error(`Transfer from private balance error, check the console for details`, {
                     duration: 5000, style: {
@@ -136,9 +124,18 @@ const TopUp = () => {
                 });
                 console.error(error);
             } finally {
-                setLoading(false);
+                await onInteractionEnd();
             }
         }
+    }
+
+    const onInteractionEnd = async () => {
+        await updateSOLBalance();
+        await updateMSOLBalance();
+        await updatePrivateMSOLBalance();
+        await updatePrivateSOLBalance();
+
+        setLoading(false);
     }
 
     return (
@@ -170,7 +167,7 @@ const TopUp = () => {
                     {/* TOP UP PANEL */}
                     <Tab.Panels>
                         <Tab.Panel>
-                            <div className='h-[330px] rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[370px] xsm:h-[380px] rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Send to the private balance
@@ -219,23 +216,26 @@ const TopUp = () => {
                                     <div className='flex flex-col w-full items-start justify-between my-1'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Wallet SOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(walletBalance / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className='text-[#3E79FF]'>{(solBalance / LAMPORTS_PER_SOL).toFixed(5)} SOL</p>
                                         </div>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Wallet mSOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{mSolBalance} mSOL</p>
+                                            <p className='text-[#3E79FF]'>{mSolBalance.toFixed(5)} mSOL</p>
                                         </div>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private SOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL).toFixed(5)} SOL</p>
                                         </div>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private mSOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{Number(privateMSOLBalance)} mSOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5)} mSOL</p>
+                                        </div>
+                                        <div className='flex items-center text-sm font-semibold text-[#333] text-opacity-70 px-2 py-3 rounded-[5px] bg-[#333] bg-opacity-20 mt-2'>
+                                            <p className=''>Topup fees are subtracted from your public balance, so leave a small amount to pay them.</p>
                                         </div>
                                     </div>
 
-                                    <div className='w-full flex flex-col mx-auto mt-10 gap-1'>
+                                    <div className='w-full flex flex-col mx-auto mt-2 gap-1'>
                                         <button className='flex items-center justify-center text-center accent-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => { handleTopUpButtonClick(e) }}>
                                             <p>Top Up</p>
                                         </button>
@@ -246,7 +246,7 @@ const TopUp = () => {
 
                         {/* WITHDRAW PANEL */}
                         <Tab.Panel>
-                            <div className='h-[310px] w-full rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[330px] xsm:h-[350px] w-full rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Withdraw from the private balance
@@ -293,14 +293,17 @@ const TopUp = () => {
                                     <div className='flex flex-col w-full items-start justify-between my-1'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private SOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL).toFixed(5)} SOL</p>
                                         </div>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private mSOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{Number(privateMSOLBalance)} mSOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5)} mSOL</p>
+                                        </div>
+                                        <div className='flex flex-col items-center text-sm font-semibold text-[#333] text-opacity-70 px-2 py-3 mt-3 rounded-[5px] bg-[#333] bg-opacity-20'>
+                                            <p>If you receive an error, try to leave a bit more tokens for fees.</p>
                                         </div>
                                     </div>
-                                    <div className='w-full flex flex-col mx-auto mt-12 gap-1'>
+                                    <div className='w-full flex flex-col mx-auto mt-3 gap-1'>
                                         <button className='flex items-center justify-center text-center accent-button-styling' disabled={withdrawAmount == 0 || loading === true} onClick={(e) => { handleSendButtonClick(e) }}>
                                             <p>Withdraw</p>
                                         </button>

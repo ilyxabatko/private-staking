@@ -1,24 +1,26 @@
 "use client"
 
 import React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, Transaction, SystemProgram } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
 import { toast } from 'react-hot-toast';
 import { useElusiv } from '@/context/ElusivAndBalance';
 import { useMarinade } from '@/context/MarinadeContext';
-import { MarinadeUtils } from '@marinade.finance/marinade-ts-sdk';
+import { BN, MarinadeUtils } from '@marinade.finance/marinade-ts-sdk';
 import { Tab } from '@headlessui/react'
 import Link from 'next/link';
 
 const Staking = () => {
-    const { signMessage, sendTransaction } = useWallet();
+    const { sendTransaction } = useWallet();
 
     const [amount, setAmount] = useState<number | string>(0);
     const [unstakeAmount, setUnstakeAmount] = useState<number | string>(0);
     const [loading, setLoading] = useState<boolean>(false);
-    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, burnerKeypair, sendFromPrivateBalance, topUpPrivateBalance, returnSolFromBurner } = useElusiv();
+    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, burnerKeypair, sendFromPrivateBalance, topUpPrivateBalance, returnSolFromBurner, returnMSolFromBurner, updateMSOLBalance, getBurnerMSOLBalance, burnerMSolBalance } = useElusiv();
     const { marinade } = useMarinade();
+    const mSOLAddress = new PublicKey("mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So");
+
 
     const depositStake = async () => {
         if (!marinade || !elusiv || !burnerKeypair || !publicKey) {
@@ -26,14 +28,14 @@ const Staking = () => {
         }
 
         // deposit a bit of SOL to a burner to initialize it:
-        const rent = await connection.getMinimumBalanceForRentExemption(0, "confirmed");
+        const rent = await connection.getMinimumBalanceForRentExemption(0);
 
         const transferSolTx = new Transaction().add(
             SystemProgram.transfer({
                 fromPubkey: publicKey,
                 toPubkey: burnerKeypair.publicKey,
                 // 125000 (0.000125 SOL) to send mSOL later, remaining SOL will be returned from the burner in the end
-                lamports: (rent + 50_000_000)
+                lamports: (rent + 10_000_000)
             })
         );
 
@@ -41,36 +43,24 @@ const Staking = () => {
 
         // build and send a Transfer tx (from private balance to a burner address)
         if (Number(privateBalance) > 0) {
-            const sendFee = (await elusiv.estimateSendFee({ amount: Number(amount), tokenType: "LAMPORTS", recipient: burnerKeypair.publicKey })).txFee / LAMPORTS_PER_SOL;
-            await sendFromPrivateBalance(burnerKeypair.publicKey, (Number(amount) + sendFee), "LAMPORTS");
+            const tx = await sendFromPrivateBalance(burnerKeypair.publicKey, (Number(amount)), "LAMPORTS");
+            tx && await connection.confirmTransaction(tx?.signature, "finalized");
         }
 
+        // get burner SOL balance
+        const currentBurnerSolBalance = await connection.getBalance(burnerKeypair.publicKey);
+        console.log("Fetched burner SOL balance: " + currentBurnerSolBalance);
+        const solToDeposit: BN = new BN(currentBurnerSolBalance - rent - MarinadeUtils.solToLamports(0.00001));
+
         // build a deposit tx (from a burner to a stake address)
-        const { transaction, associatedMSolTokenAccountAddress } = await marinade.deposit(MarinadeUtils.solToLamports(Number(amount)));
+        const { transaction, associatedMSolTokenAccountAddress } = await marinade.deposit(solToDeposit, { mintToOwnerAddress: burnerKeypair.publicKey});
 
         // send and confirm a deposit tx
         const depositSignature = await connection.sendTransaction(transaction, [burnerKeypair]);
         await connection.confirmTransaction(depositSignature, "finalized");
         console.log("Deposit signature: " + depositSignature);
 
-        // topup private balance with mSOL from a burner
-        console.log("Sending mSOL to the private balance...");
-
-        const mSolBalance = (await connection.getTokenAccountBalance(associatedMSolTokenAccountAddress)).value.uiAmountString; // the balance as a string, using mint-prescribed decimals
-        console.log("Burner mSOL balance: " + Number(mSolBalance));
-        const mSolBalanceParsed = mSolBalance && parseFloat(mSolBalance);
-
-        try {
-            const topUpSignature = mSolBalance && await topUpPrivateBalance(mSolBalanceParsed as number, "mSOL", burnerKeypair.publicKey).then(() => updatePrivateMSOLBalance());
-
-            console.log(mSolBalance + " mSOL tokens were sent to the private balance");
-            return topUpSignature;
-        } catch (error) {
-            console.log("An error topping up mSOL private balance: " + error);
-        }
-
-        // return the remaining SOL from the burner to the private balance
-        returnSolFromBurner();
+        return depositSignature;
     }
 
     const unstakeLiquid = async () => {
@@ -86,7 +76,7 @@ const Staking = () => {
                 fromPubkey: publicKey,
                 toPubkey: burnerKeypair.publicKey,
                 // 125000 (0.000125 SOL) to send mSOL later, remaining SOL will be returned from the burner in the end
-                lamports: (rent + 50_000_000)
+                lamports: (rent + 10_000_000)
             })
         );
 
@@ -94,28 +84,30 @@ const Staking = () => {
 
         // build and send a Transfer tx (from private balance to a burner address)
         if (Number(privateMSOLBalance) > 0) {
-            const sendFee = (await elusiv.estimateSendFee({ amount: Number(unstakeAmount), tokenType: "mSOL", recipient: burnerKeypair.publicKey })).txFee / LAMPORTS_PER_SOL;
-            await sendFromPrivateBalance(burnerKeypair.publicKey, (Number(unstakeAmount) + sendFee), "mSOL");
+            const tx = await sendFromPrivateBalance(burnerKeypair.publicKey, (Number(unstakeAmount)), "mSOL");
+            tx && await connection.confirmTransaction(tx?.signature, "finalized");
         }
 
+        // get burner mSOL balance
+        const mSOLBurnerTokenAccount = await MarinadeUtils.getAssociatedTokenAccountAddress(mSOLAddress, burnerKeypair?.publicKey);
+        const mSolBurnerBalance = mSOLBurnerTokenAccount && (await connection.getTokenAccountBalance(mSOLBurnerTokenAccount)).value.uiAmountString; // the balance as a string, using mint-prescribed decimals
+        const mSolBalanceParsed = mSolBurnerBalance && parseFloat(mSolBurnerBalance);
+        console.log("Fetched burner mSOL Balance: " + mSolBalanceParsed);
+
         // build a deposit tx (from a burner to your private balance)
-        const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(Number(unstakeAmount)));
+        const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(Number(mSolBalanceParsed)));
 
         // send and confirm an unstake tx
         const unstakeSignature = await connection.sendTransaction(transaction, [burnerKeypair]);
-        await connection.confirmTransaction(unstakeSignature, "finalized").then(() => {
-            updatePrivateSOLBalance();
-        });
+        await connection.confirmTransaction(unstakeSignature, "finalized");
         console.log("Unstake signature: " + unstakeSignature);
 
-        // return the unstaked and the remaining SOL from the burner to the private balance
-        returnSolFromBurner();
         return unstakeSignature;
     }
 
     const handleStakeButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Depositing tokens...");
+        toast("Depositing tokens...", { duration: 3000});
         setLoading(true);
 
         if (Number(amount) > 0 && Number(privateBalance) > 0) {
@@ -124,7 +116,7 @@ const Staking = () => {
                 toast((t) => (
                     <span className='px-2 py-1 overflow-auto text-base'>
                         Transfer details:
-                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig}?cluster=devnet`}>
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig}`} target="_blank" rel="noopener noreferrer">
                             click
                         </Link>
                     </span>
@@ -138,14 +130,14 @@ const Staking = () => {
                 });
                 console.log(error);
             } finally {
-                setLoading(false);
+                await onInteractionEnd();
             }
         }
     };
 
     const handleUnstakeButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Unstaking tokens...");
+        toast("Unstaking tokens...", { duration: 3000});
         setLoading(true);
 
         if (Number(unstakeAmount) > 0 && Number(privateMSOLBalance) > 0) {
@@ -155,7 +147,7 @@ const Staking = () => {
                 toast((t) => (
                     <span className='px-2 py-1 overflow-auto text-base'>
                         Transfer details:
-                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig}?cluster=devnet`}>
+                        <Link className='text-[#3E79FF] ml-1 hover:underline' href={`https://explorer.solana.com/tx/${sig}`} target="_blank" rel="noopener noreferrer">
                             click
                         </Link>
                     </span>
@@ -169,10 +161,21 @@ const Staking = () => {
                 });
                 console.log(error);
             } finally {
-                setLoading(false);
+                await onInteractionEnd();
             }
         }
     };
+
+    const onInteractionEnd = async () => {
+        // return the remaining SOL and mSOL from the burner to the private balance and update mSOL balance
+        await updateMSOLBalance();
+        await updatePrivateMSOLBalance();
+        await updatePrivateSOLBalance();
+        await returnMSolFromBurner();
+        await returnSolFromBurner();
+
+        setLoading(false);
+    }
 
     const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
@@ -196,7 +199,7 @@ const Staking = () => {
         if (Number(privateMSOLBalance) === 0 || !privateMSOLBalance) {
             setUnstakeAmount(Number(0));
         } else {
-            setUnstakeAmount((Number(privateMSOLBalance)).toFixed(5));
+            setUnstakeAmount((Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5));
         }
     };
 
@@ -229,7 +232,7 @@ const Staking = () => {
 
                         {/* STAKE PANEL */}
                         <Tab.Panel>
-                            <div className='h-[310px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[380px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Start liquid staking privately
@@ -247,18 +250,25 @@ const Staking = () => {
                                     <div className='flex flex-col w-full items-start justify-between mt-1'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private SOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL).toFixed(5)} SOL</p>
                                         </div>
                                     </div>
                                     <div className='flex flex-col w-full items-start justify-between'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private mSOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL)} mSOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5)} mSOL</p>
+                                        </div>
+                                    </div>
+                                    <div className='flex w-full items-start mt-2'>
+                                        <div className='flex flex-col items-left text-sm font-semibold text-[#333] text-opacity-70 px-2 py-3 rounded-[5px] bg-[#333] bg-opacity-20'>
+                                            <p className='font-bold text-base'>Stake at least 1.3 SOL, because:</p>
+                                            <p>• Elusiv substracts send fees from your private balance.</p>
+                                            <p>• Marinade allows to stake 1 SOL at least;</p>
                                         </div>
                                     </div>
 
-                                    <div className='w-full flex flex-col mx-auto mt-12 gap-1'>
-                                        <button className='flex items-center justify-center text-center accent-button-styling' disabled={amount === 0 || loading === true} onClick={(e) => { handleStakeButtonClick(e) }}>
+                                    <div className='w-full flex flex-col mx-auto mt-6 gap-1'>
+                                        <button className='flex items-center justify-center text-center accent-button-styling' disabled={!amount || Number(amount) < 1.3 || loading === true} onClick={(e) => { handleStakeButtonClick(e) }}>
                                             <p>Stake</p>
                                         </button>
                                     </div>
@@ -268,7 +278,7 @@ const Staking = () => {
 
                         {/* UNSTAKE PANEL */}
                         <Tab.Panel>
-                            <div className='h-[310px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[370px] rounded-[10px] bg-white w-full flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
                                     <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
                                         Unstake your SOL
@@ -285,18 +295,24 @@ const Staking = () => {
                                     </div>
                                     <div className='flex flex-col w-full items-start justify-between mt-1'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
-                                            <p className=''>Private Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL)} SOL</p>
+                                            <p className=''>Private SOL Balance: </p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateBalance) / LAMPORTS_PER_SOL).toFixed(5)} SOL</p>
                                         </div>
                                     </div>
                                     <div className='flex flex-col w-full items-start justify-between'>
                                         <div className='flex items-center text-sm text-[#333] text-opacity-70 gap-1'>
                                             <p className=''>Private mSOL Balance: </p>
-                                            <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL)} mSOL</p>
+                                            <p className='text-[#3E79FF]'>{(Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5)} mSOL</p>
+                                        </div>
+                                    </div>
+                                    <div className='flex flex-col w-full items-start mt-2'>
+                                        <div className='flex flex-col items-center text-sm font-semibold text-[#333] text-opacity-70 px-2 py-3 rounded-[5px] bg-[#333] bg-opacity-20'>
+                                            <p>• Elusiv substracts send fees from your private balance.</p>
+                                            <p>• You can only unstake with all of your private mSOL at this point.</p>
                                         </div>
                                     </div>
 
-                                    <div className='w-full flex flex-col mx-auto mt-12 gap-1'>
+                                    <div className='w-full flex flex-col mx-auto mt-5 gap-1'>
                                         <button className='flex items-center justify-center text-center accent-button-styling' disabled={unstakeAmount === 0 || loading === true} onClick={(e) => { handleUnstakeButtonClick(e) }}>
                                             <p>Unstake</p>
                                         </button>

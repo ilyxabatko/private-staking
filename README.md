@@ -40,7 +40,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Note
 
-StakenZ acknowledges that errors might occur during staking and unstaking transactions at this stage. 
+StakenZ acknowledges that errors might occur during staking and unstaking transactions at this stage. If you encounter errors, change input amount and try again.
 
 ## Author
 
