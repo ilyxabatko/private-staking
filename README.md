@@ -45,7 +45,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 StakenZ acknowledges that errors might occur during staking and unstaking transactions at this stage. If you encounter errors, change input amount or reload the page and try again. 
 
-All the funds that was stuck in the burner wallet due to an error will be refunded to either your private balance or your connected wallet in the end, BUT be sure to save your private keypair to be able to ge your funds back in case unexpected behaviour occurs. 
+All the funds that was stuck in the burner wallet due to an error will be refunded to either your private balance or your connected wallet in the end, BUT be sure to save your private keypair to be able to ge your funds back in case unexpected behaviour occurs. This is a temporary solution to be sure that you won't lose your funds.
 
 The app operates on mainnet due to Elusiv "mSOL" incompatibility on Devnet, so at this point I'll ask someone from Elusiv team to review my code and be sure that your assets is safu.
 
