@@ -16,7 +16,6 @@ const TopUp = () => {
     const [inputTokenType, setInputTokenType] = useState<TokenType>("LAMPORTS");
     const [loading, setLoading] = useState<boolean>(false);
     const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, sendFromPrivateBalance, topUpPrivateBalance, updateSOLBalance, solBalance, mSolBalance, updateMSOLBalance } = useElusiv();
-    const { marinade } = useMarinade();
 
     useEffect(() => {
         if (!publicKey || !connection) return;
@@ -69,7 +68,7 @@ const TopUp = () => {
 
     const handleTopUpButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Topping Up...", { duration: 3000});
+        toast("Topping Up...", { duration: 3000 });
         setLoading(true);
 
         if (solBalance > 0 && publicKey) {
@@ -94,13 +93,14 @@ const TopUp = () => {
                 console.error(error);
             } finally {
                 await onInteractionEnd();
+                setLoading(false);
             }
         }
     }
 
     const handleSendButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Sending private balance tokens... ", { duration: 3000});
+        toast("Sending private balance tokens... ", { duration: 3000 });
         setLoading(true);
 
         if (Number(privateBalance) > 0) {
@@ -125,6 +125,7 @@ const TopUp = () => {
                 console.error(error);
             } finally {
                 await onInteractionEnd();
+                setLoading(false);
             }
         }
     }
@@ -134,8 +135,6 @@ const TopUp = () => {
         await updateMSOLBalance();
         await updatePrivateMSOLBalance();
         await updatePrivateSOLBalance();
-
-        setLoading(false);
     }
 
     return (
@@ -246,9 +245,9 @@ const TopUp = () => {
 
                         {/* WITHDRAW PANEL */}
                         <Tab.Panel>
-                            <div className='h-[330px] xsm:h-[350px] w-full rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
+                            <div className='h-[330px] xsm:h-[340px] w-full rounded-[10px] bg-white flex flex-col justify-start p-4 py-6'>
                                 <div className='flex flex-col items-start'>
-                                    <div className='text-lg font-semibold text-[#333] flex items-center mb-6'>
+                                    <div className='text-lg font-semibold text-[#333] flex items-center mb-6 xsm:mb-1'>
                                         Withdraw from the private balance
                                     </div>
                                     <div className={`flex border border-[#333] border-opacity-30 bg-white w-full rounded-[5px] p-2 my-2 mx-auto items-center justify-between hover:border-[#3E79FF] focus:border-[#3E79FF] transition-all ease-in duration-150 ${loading && "cursor-not-allowed opacity-50"}`}>

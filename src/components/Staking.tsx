@@ -1,9 +1,8 @@
 "use client"
 
-import React from 'react';
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, Transaction, SystemProgram, PublicKey, Keypair } from '@solana/web3.js';
 import { toast } from 'react-hot-toast';
 import { useElusiv } from '@/context/ElusivAndBalance';
 import { useMarinade } from '@/context/MarinadeContext';
@@ -17,10 +16,10 @@ const Staking = () => {
     const [amount, setAmount] = useState<number | string>(0);
     const [unstakeAmount, setUnstakeAmount] = useState<number | string>(0);
     const [loading, setLoading] = useState<boolean>(false);
-    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, burnerKeypair, sendFromPrivateBalance, topUpPrivateBalance, returnSolFromBurner, returnMSolFromBurner, updateMSOLBalance, getBurnerMSOLBalance, burnerMSolBalance } = useElusiv();
+    const [isCopyClicked, setIsCopyClicked] = useState<boolean>(false);
+    const { privateBalance, privateMSOLBalance, elusiv, updatePrivateSOLBalance, updatePrivateMSOLBalance, publicKey, connection, burnerKeypair, sendFromPrivateBalance, returnSolFromBurner, returnMSolFromBurner, updateMSOLBalance, getBurnerMSOLBalance, burnerMSolBalance, updateSOLBalance } = useElusiv();
     const { marinade } = useMarinade();
     const mSOLAddress = new PublicKey("mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So");
-
 
     const depositStake = async () => {
         if (!marinade || !elusiv || !burnerKeypair || !publicKey) {
@@ -53,7 +52,7 @@ const Staking = () => {
         const solToDeposit: BN = new BN(currentBurnerSolBalance - rent - MarinadeUtils.solToLamports(0.00001));
 
         // build a deposit tx (from a burner to a stake address)
-        const { transaction, associatedMSolTokenAccountAddress } = await marinade.deposit(solToDeposit, { mintToOwnerAddress: burnerKeypair.publicKey});
+        const { transaction, associatedMSolTokenAccountAddress } = await marinade.deposit(solToDeposit, { mintToOwnerAddress: burnerKeypair.publicKey });
 
         // send and confirm a deposit tx
         const depositSignature = await connection.sendTransaction(transaction, [burnerKeypair]);
@@ -107,7 +106,7 @@ const Staking = () => {
 
     const handleStakeButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Depositing tokens...", { duration: 3000});
+        toast("Depositing tokens...", { duration: 3000 });
         setLoading(true);
 
         if (Number(amount) > 0 && Number(privateBalance) > 0) {
@@ -131,13 +130,15 @@ const Staking = () => {
                 console.log(error);
             } finally {
                 await onInteractionEnd();
+                await refundFromBurner();
+                setLoading(false);
             }
         }
     };
 
     const handleUnstakeButtonClick = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
-        toast("Unstaking tokens...", { duration: 3000});
+        toast("Unstaking tokens...", { duration: 3000 });
         setLoading(true);
 
         if (Number(unstakeAmount) > 0 && Number(privateMSOLBalance) > 0) {
@@ -162,19 +163,23 @@ const Staking = () => {
                 console.log(error);
             } finally {
                 await onInteractionEnd();
+                await refundFromBurner();
+                setLoading(false);
             }
         }
     };
 
     const onInteractionEnd = async () => {
         // return the remaining SOL and mSOL from the burner to the private balance and update mSOL balance
+        await updateSOLBalance();
         await updateMSOLBalance();
         await updatePrivateMSOLBalance();
         await updatePrivateSOLBalance();
+    }
+
+    const refundFromBurner = async () => {
         await returnMSolFromBurner();
         await returnSolFromBurner();
-
-        setLoading(false);
     }
 
     const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,6 +207,24 @@ const Staking = () => {
             setUnstakeAmount((Number(privateMSOLBalance) / LAMPORTS_PER_SOL).toFixed(5));
         }
     };
+
+    const handleCopyKeypairButtonClick = () => {
+        if (burnerKeypair) {
+            navigator.clipboard.writeText(burnerKeypair.secretKey.toString());
+            setIsCopyClicked(true);
+
+            setTimeout(() => {
+                setIsCopyClicked(false);
+            }, 7000);
+        } else {
+            toast.error(`No keypair generated, try to refresh the page.`, {
+                duration: 5000, style: {
+                    overflow: "auto",
+                    padding: "16px"
+                }
+            });
+        }
+    }
 
     return (
         <section className="h-[70vh] flex items-center justify-center mx-auto overflow-hidden relative">
@@ -324,6 +347,15 @@ const Staking = () => {
                     </Tab.Panels>
 
                 </Tab.Group>
+
+                <div className='w-1/3 xsm:w-1/2 flex mx-auto mt-3'>
+                    <button className='flex w-full items-center justify-center text-center border border-[#3E79FF] hover:bg-slate-400 rounded-[5px] bg-[#3E79FF] bg-opacity-80 px-3 py-2 text-sm text-white font-medium disabled:bg-slate-400' disabled={burnerKeypair === undefined || isCopyClicked === true} onClick={() => { handleCopyKeypairButtonClick() }}
+                        onClickCapture={() => {
+                            toast.success("Private key was copied successfully!", { duration: 3000 });
+                        }} >
+                        Copy Keypair
+                    </button>
+                </div>
 
             </div>
 

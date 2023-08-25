@@ -87,25 +87,6 @@ export const ElusivProvider: FC<Props> = ({ children }) => {
         }
     }, [elusiv])
 
-    useEffect(() => {
-        if (burnerKeypair) {
-            toast((t) => (
-                <div className='px-2 py-1 overflow-auto text-base hover:cursor-pointer flex justify-center items-center' onClick={() => { navigator.clipboard.writeText(burnerKeypair.secretKey.toString()) }} onClickCapture={() => {
-                    toast.success("Private key was copied successfully!", { duration: 3000 });
-                    toast.dismiss(t.id);
-                }}>
-                    <span className='text-red-500 font-medium'>
-                        CLICK to copy your burner keypair for security reasons!
-                    </span>
-                </div>
-            ), {
-                duration: 10000, style: {
-                    color: "tomato",
-                }
-            });
-        }
-    });
-
     const getTimeStamp = async () => {
         const slot = await connection.getSlot({ commitment: "confirmed" });
         const timestamp = await connection.getBlockTime(slot);
