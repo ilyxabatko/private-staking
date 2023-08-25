@@ -15,6 +15,14 @@ Additionally, StakenZ integrates with the Marinade Protocol, a Solana-based stak
 - **Upcoming GUI Enhancements:** While the current front-end may not be fully polished, rest assured that StakenZ has plans to provide a more intuitive and informative graphical user interface (GUI) in the near future.
 - **Future-Focused:** StakenZ is currently available on the Devnet network, but excitingly, it will soon launch on the Solana mainnet, expanding its reach and capabilities.
 
+## Workflow
+
+### Staking: 
+- Top-up your SOL private balance.
+- Private assets are sent to a one-time unique burner account.
+- Burner deposits your SOL on a Marinade staking account and receive mSOL.
+- All the mSOL and SOL tokens are sent from a burner either to your private balance or your connected wallet account if an error with the former process occurs.
+
 ## Local start
 
 Clone the repository
@@ -33,14 +41,19 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Note
+
+StakenZ acknowledges that errors might occur during staking and unstaking transactions at this stage. If you encounter errors, change input amount or reload the page and try again. 
+
+All the funds that was stuck in the burner wallet due to an error will be refunded to either your private balance or your connected wallet in the end, BUT be sure to save your private keypair to be able to ge your funds back in case unexpected behaviour occurs. 
+
+The app operates on mainnet due to Elusiv "mSOL" incompatibility on Devnet, so at this point I'll ask someone from Elusiv team to review my code and be sure that your assets is safu.
+
 ## Resources
 
 - [Elusiv](https://elusiv.io/): Learn more about the privacy protocol that powers secure transactions and compliance solutions.
 - [Marinade Protocol](https://marinade.finance/): Explore the staking protocol that enables efficient liquidity staking on the Solana blockchain.
 
-## Note
-
-StakenZ acknowledges that errors might occur during staking and unstaking transactions at this stage. If you encounter errors, change input amount and try again.
 
 ## Author
 
